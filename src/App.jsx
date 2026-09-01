@@ -10,10 +10,20 @@ import { uploadMetadataToIPFS } from './utils/ipfs';
 import './App.css';
 
 const HORIZON_URL = 'https://horizon-testnet.stellar.org';
-const horizon = new Horizon.Server(HORIZON_URL);
+let horizon;
+try {
+  horizon = new Horizon.Server(HORIZON_URL);
+} catch (e) {
+  console.warn('Failed to initialize Horizon server:', e);
+}
 
 const SOROBAN_RPC_URL = 'https://soroban-testnet.stellar.org';
-const soroban = new rpc.Server(SOROBAN_RPC_URL);
+let soroban;
+try {
+  soroban = new rpc.Server(SOROBAN_RPC_URL);
+} catch (e) {
+  console.warn('Failed to initialize Soroban RPC server:', e);
+}
 
 const CAMPAIGN_TARGET_XLM = 500;
 const SOROBAN_CONTRACT_ID = 'CCXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX'; // Placeholder
@@ -25,16 +35,23 @@ const nextEventId = () => {
   return eventSequence;
 };
 
-// Initialize StellarWalletsKit
-const kit = new StellarWalletsKit({
-  selectedNetwork: Networks.TESTNET,
-  modules: [
-    new FreighterModule(),
-    new AlbedoModule(),
-    new xBullModule(),
-    new LobstrModule(),
-  ],
-});
+// Initialize StellarWalletsKit — wrapped in try/catch because wallet
+// extension modules (Freighter, Albedo, xBull, Lobstr) can throw when
+// the browser extension is not installed or during SSR/build.
+let kit;
+try {
+  kit = new StellarWalletsKit({
+    selectedNetwork: Networks.TESTNET,
+    modules: [
+      new FreighterModule(),
+      new AlbedoModule(),
+      new xBullModule(),
+      new LobstrModule(),
+    ],
+  });
+} catch (e) {
+  console.warn('Failed to initialize StellarWalletsKit:', e);
+}
 
 // Initial Mock Milestones for DAO Voting
 const INITIAL_MILESTONES = [
@@ -137,6 +154,11 @@ function App() {
         await fetchBalance(pubKey);
         await fetchTransactions(pubKey);
       } else {
+        if (!kit) {
+          setErrorType('NOT_FOUND');
+          setErrorMessage('Wallet kit failed to initialize. Please reload the page.');
+          return;
+        }
         kit.setWallet(walletId);
         const { address } = await kit.getPublicKey();
         if (!address) {
@@ -184,6 +206,11 @@ function App() {
 
     setBalanceLoading(true);
     try {
+      if (!horizon) {
+        setBalance(0);
+        setBalanceLoading(false);
+        return;
+      }
       const account = await horizon.loadAccount(key);
       const native = account.balances.find((b) => b.asset_type === 'native');
       setBalance(native ? parseFloat(native.balance) : 0);
@@ -204,6 +231,10 @@ function App() {
 
     setTransactionsLoading(true);
     try {
+      if (!horizon) {
+        setTransactionsLoading(false);
+        return;
+      }
       const page = await horizon.transactions().forAccount(key).order('desc').limit(5).call();
       setRecentTransactions(page.records.map((transaction) => ({
         hash: transaction.hash,

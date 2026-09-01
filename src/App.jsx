@@ -925,15 +925,15 @@ function App() {
               <button className="btn btn-primary" onClick={() => sendAiQuery()}>Send</button>
             </div>
             
-            <div className="ipfs-publish-row" style={{ marginTop: '20px', padding: '15px', background: 'rgba(255,255,255,0.03)', borderRadius: '12px', border: '1px solid var(--border-color)' }}>
+            <div className="ipfs-publish-row">
               <h4>Decentralized Storage</h4>
-              <p style={{ fontSize: '13px', color: 'var(--text-muted)', margin: '8px 0 12px 0' }}>Upload your campaign metadata (title, description) to IPFS via Pinata.</p>
-              <button className="btn btn-secondary glow-btn" onClick={handleSaveToIPFS} disabled={ipfsLoading}>
+              <p className="tab-desc">Upload your campaign metadata (title, description) to IPFS via Pinata.</p>
+              <button className="btn btn-primary glow-btn" onClick={handleSaveToIPFS} disabled={ipfsLoading}>
                 {ipfsLoading ? 'Uploading to IPFS...' : '📤 Publish to IPFS'}
               </button>
               {ipfsUri && (
-                <div style={{ marginTop: '12px', fontSize: '13px', color: 'var(--neon-cyan)', wordBreak: 'break-all' }}>
-                  <strong>Success! IPFS URI:</strong> {ipfsUri}
+                <div style={{ marginTop: '12px', fontSize: '13px', color: 'var(--accent-start)', wordBreak: 'break-all' }}>
+                  <strong>✅ Success! IPFS URI:</strong> {ipfsUri}
                 </div>
               )}
             </div>
